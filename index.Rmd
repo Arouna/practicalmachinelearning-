@@ -19,7 +19,7 @@ library(dplyr)
 library(ggplot2)
 ```
 
-## Reading  training data from web.
+## Reading  datasets from web.
 
 The data for this project come from this source: [http://groupware.les.inf.puc-rio.br/har](http://groupware.les.inf.puc-rio.br/har)
 
@@ -81,15 +81,15 @@ In this section we apply random forests to the *traindata*, using the randomFore
 
 4. Random forest can help select only the most important features
 
-5. Althougth Random forest may overfit a training data set, nevetheless, it has been shown that classifier variance does not grow with the number of trees used. 
+5. Althougth Random forest may overfit a training data set, nevertheless, it has been shown that classifier variance does not grow with the number of trees used. 
 
 
 
 ```{r model, echo = TRUE}
 set.seed(1234) #Set the pseudo-random seed to a known value to try and make estimation repeatable
- modfit <- randomForest(classe ~., data=traindata, importance=T, type="class")
+# modfit <- randomForest(classe ~., data=traindata, importance=T, type="class")
 
- save(modfit,file="modfit.RData")
+# save(modfit,file="modfit.RData")
 
 load("modfit.RData")
 modfit

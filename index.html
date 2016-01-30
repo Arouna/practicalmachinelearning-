@@ -72,8 +72,8 @@ img {
 <p>Using data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants, we have built a machine learning model to predict the manner in which the participants was performing activities.</p>
 <p>Here is the strategy we follow the process of building the model. In a first step, we eliminate features with too many missing values. Then, we exclude from the analysis all variables which do not come from accelerometer measurements but instead record experimental setup or participants’s data. At this point, the final training dataset contains 53 variables. This number must be compared to 160 variables in initial traning dataset. The final training dataset is then divided into two parts: the real training set used to train random forests model and the validation dataset used as the out-of-sample to measure the model accuracy. With this mdel, we obtain an expected out of sample error 0.51%. Finally, we apply the random forest model on the testing set and obtain 100% accuracy.</p>
 </div>
-<div id="reading-training-data-from-web." class="section level2">
-<h2>Reading training data from web.</h2>
+<div id="reading-datasets-from-web." class="section level2">
+<h2>Reading datasets from web.</h2>
 <p>The data for this project come from this source: <a href="http://groupware.les.inf.puc-rio.br/har"><a href="http://groupware.les.inf.puc-rio.br/har" class="uri">http://groupware.les.inf.puc-rio.br/har</a></a></p>
 <pre class="r"><code>trainURL &lt;- &quot;https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv&quot;
 testURL &lt;- &quot;https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv&quot;
@@ -117,12 +117,12 @@ holdoutdata &lt;- training[-inTrain,]</code></pre>
 <li><p>Random forests perform well on problem with non-linearity.</p></li>
 <li><p>Random forest can be used on data with an extremely large number of features or examples</p></li>
 <li><p>Random forest can help select only the most important features</p></li>
-<li><p>Althougth Random forest may overfit a training data set, nevetheless, it has been shown that classifier variance does not grow with the number of trees used.</p></li>
+<li><p>Althougth Random forest may overfit a training data set, nevertheless, it has been shown that classifier variance does not grow with the number of trees used.</p></li>
 </ol>
 <pre class="r"><code>set.seed(1234) #Set the pseudo-random seed to a known value to try and make estimation repeatable
- modfit &lt;- randomForest(classe ~., data=traindata, importance=T, type=&quot;class&quot;)
+# modfit &lt;- randomForest(classe ~., data=traindata, importance=T, type=&quot;class&quot;)
 
- save(modfit,file=&quot;modfit.RData&quot;)
+# save(modfit,file=&quot;modfit.RData&quot;)
 
 load(&quot;modfit.RData&quot;)
 modfit</code></pre>

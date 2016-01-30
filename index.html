@@ -120,9 +120,9 @@ holdoutdata &lt;- training[-inTrain,]</code></pre>
 <li><p>Althougth Random forest may overfit a training data set, nevertheless, it has been shown that classifier variance does not grow with the number of trees used.</p></li>
 </ol>
 <pre class="r"><code>set.seed(1234) #Set the pseudo-random seed to a known value to try and make estimation repeatable
-# modfit &lt;- randomForest(classe ~., data=traindata, importance=T, type=&quot;class&quot;)
+ modfit &lt;- randomForest(classe ~., data=traindata, importance=T, type=&quot;class&quot;)
 
-# save(modfit,file=&quot;modfit.RData&quot;)
+ save(modfit,file=&quot;modfit.RData&quot;)
 
 load(&quot;modfit.RData&quot;)
 modfit</code></pre>

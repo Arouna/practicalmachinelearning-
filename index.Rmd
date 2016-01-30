@@ -87,9 +87,9 @@ In this section we apply random forests to the *traindata*, using the randomFore
 
 ```{r model, echo = TRUE}
 set.seed(1234) #Set the pseudo-random seed to a known value to try and make estimation repeatable
-# modfit <- randomForest(classe ~., data=traindata, importance=T, type="class")
+ modfit <- randomForest(classe ~., data=traindata, importance=T, type="class")
 
-# save(modfit,file="modfit.RData")
+ save(modfit,file="modfit.RData")
 
 load("modfit.RData")
 modfit

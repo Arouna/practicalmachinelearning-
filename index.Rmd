@@ -112,7 +112,7 @@ varImpo[1:10, ] # displaying the 10 first important variables
 
 The results indicate that across all of the trees considered in the random forest,*roll_belt* predictor  is the most important variables. 
 
-In the  following figures Fig1 and Fig2, we have created two representation of the top 10 variables categorized by importance. Fig1 display the top 10 predictors Importance accuracy  and Fig 2 display the top 10 predictors Gini Importance.
+In the  following figures Fig2 and Fig3, we have created two representation of the top 10 variables categorized by importance. Fig2 display the top 10 predictors Importance accuracy  and Fig3 display the top 10 predictors Gini Importance.
 ```{r plotvarimpo, echo = TRUE}
  # Plot the   variable importance as measured by accuracy change
 varImpPlot(modfit, type=1, n.var=10, scale=T, main="Fig2 - Top 10 predictors Importance accuracy")

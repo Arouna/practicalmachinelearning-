@@ -5,18 +5,151 @@ date: "30 janvier 2016"
 output: html_document
 ---
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+## Synopsis
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+Using data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants,  we have built a machine learning model to predict the manner in which the participants was performing activities.
 
-```{r}
-summary(cars)
+Here is the strategy we follow the process of building the model. In a first step, we eliminate features with too many missing values. Then, we exclude from the analysis all variables   which do not come from accelerometer measurements but instead record experimental setup or participants's data. At this point, the final  training dataset contains 53 variables. This number must be compared to  160 variables in initial traning dataset. The final training dataset is then divided into two parts: the real training set  used to train  random  forests model and the validation dataset used as the out-of-sample to measure the model accuracy. With this mdel, we obtain an expected out of sample error 0.51%. Finally, we apply the random forest model on the testing set and obtain 100%  accuracy.
+
+
+```{r datapacge, message=FALSE, echo=FALSE} 
+library(caret)
+library(randomForest)
+library(dplyr)
+library(ggplot2)
 ```
 
-You can also embed plots, for example:
+## Reading  training data from web.
 
-```{r, echo=FALSE}
-plot(cars)
+The data for this project come from this source: [http://groupware.les.inf.puc-rio.br/har](http://groupware.les.inf.puc-rio.br/har)
+
+```{r loading, echo = TRUE, cache=TRUE} 
+trainURL <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+testURL <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+trainfile <- "pml-training.csv"
+testfile <- "pml-testing.csv"
+if (!file.exists(trainfile)) {
+    download.file(trainURL, destfile = trainfile)
+}
+train <- read.table('pml-training.csv', header = TRUE, sep = ',', na.strings=c("NA", "#DIV/0!"))
+
+if (!file.exists(testfile)) {
+    download.file(testURL, destfile = testfile)
+}
+test <- read.table('pml-testing.csv', header = TRUE, sep = ',', na.strings=c("NA", "#DIV/0!"))
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Features selection
+
+```{r excluding_na, echo = TRUE}
+nonatrain<- train[, apply(train, 2, function(x) !any(is.na(x)))] ## Selecting column without any NA value.
+
+## Selecting predictor column  variables: Belt, arm, dumbbell, and forearm variables  are the selected predictor candidates
+is.selectedcol <- grepl("belt|[^(fore)]arm|dumbbell|forearm", names(nonatrain)) ## creata a boolean vector 
+includedtest.col <- names(nonatrain)[is.selectedcol] ## Selecting column name with the boolean vector
+included.col <- c("classe",includedtest.col)
+training <- nonatrain[, included.col] ## The final trainning dataset
+```
+
+After this transformation, we have a dataset with 19622 observations, 1 outcome variable ("classe") and 52 predictors
+variables.
+
+```{r dimtrain, echo = TRUE} 
+dim(training)
+```
+
+## Building a random forests model
+
+The initial training dataset is partitioned into a smaller  training dataset (*traindata*) and a validation dataset (*holdoutdata*)
+
+```{r mdataset, echo = TRUE}
+inTrain <- createDataPartition(y=training$classe, p=0.7, list=FALSE)
+traindata <- training[inTrain,]
+holdoutdata <- training[-inTrain,]
+```
+
+## Random forests and cross validation
+
+In this section we apply random forests to the *traindata*, using the randomForest package in R. Here some motivation of random forests choice:
+
+1. In random forests, there is no need for cross-validation or a separate test set to get an unbiased estimate of the test set error. It is estimated internally, during the run.
+
+2. Random forests perform well on problem with non-linearity.
+
+3. Random forest can be used on data with an extremely large number of features or examples
+
+4. Random forest can help select only the most important features
+
+5. Althougth Random forest may overfit a training data set, nevetheless, it has been shown that classifier variance does not grow with the number of trees used. 
+
+
+
+```{r model, echo = TRUE}
+set.seed(1234) #Set the pseudo-random seed to a known value to try and make estimation repeatable
+ modfit <- randomForest(classe ~., data=traindata, importance=T, type="class")
+
+ save(modfit,file="modfit.RData")
+
+load("modfit.RData")
+modfit
+```
+
+We have got an OOB estimate of  error rate of 0.53% showing that the good quality of the model.
+
+```{r finalmodelplot, echo = TRUE}
+plot(modfit, main = "Fig1 - OOB error rate convergence versus number of trees" )  # plotting the final model
+```
+
+By default, the randomForest() function creates an ensemble of 500 trees. In the final model plot (Fig1), we can see that the overall error converge at around 100 trees. So it is possible to speed up the model by tuning the number of trees.
+
+## Checking the importance variables
+
+```{r varimpo, echo = TRUE}
+varImpo <- varImp(modfit)  # Calling importance() on the model
+varImpo[1:10, ] # displaying the 10 first important variables
+```
+
+The results indicate that across all of the trees considered in the random forest,*roll_belt* predictor  is the most important variables. 
+
+In the  following figures Fig1 and Fig2, we have created two representation of the top 10 variables categorized by importance. Fig1 display the top 10 predictors Importance accuracy  and Fig 2 display the top 10 predictors Gini Importance.
+```{r plotvarimpo, echo = TRUE}
+ # Plot the   variable importance as measured by accuracy change
+varImpPlot(modfit, type=1, n.var=10, scale=T, main="Fig2 - Top 10 predictors Importance accuracy")
+varImpPlot(modfit, type=2, n.var=10, scale=T, main="Fig3 - Top 10 predictors Gini Importance")
+```
+
+
+
+## Holdout validation : expected out of sample error 
+
+Predicting the out of sample error using the hold out dataset (*holdoutdata*) containing 30% of the initial training dataset.
+
+```{r crossval, echo = TRUE, cache=TRUE}
+predval <- predict(modfit,newdata=holdoutdata)  ### getting the values predicted by the model
+missClass = function(values, prediction) {
+    sum(prediction != values)/length(values)
+}
+errRate = missClass(holdoutdata$classe, predval)
+errRate
+```
+
+Based on the missclassificaiton rate on the validation dataset, the expected out of sample error is `r round(100*errRate,2)`%.
+
+
+## Using the model to make prediction on the test dataset
+
+Using Our model, we have got 100% of the answer right. 
+```{r prediction, echo = TRUE, cache=TRUE}
+testdata <- test[,includedtest.col]  ## Selecting column name with the boolean vector
+predtest <- predict(modfit,newdata=testdata)  ## getting the values predicted by the model
+predtest
+```
+
+## Conclusions
+
+In this report, we have used random forests method to build a machine learning model for the training dataset. 
+This model was used on the validation dataset to determine an expected out of sample error  0.51% . The model was then applied on
+the test dataset and win 100% accuracy (20/20).
+
+The final model plot (Fig1), show that the overall error converge at around 100 trees. So it is possible to speed up the model used here by tuning the number of trees.
